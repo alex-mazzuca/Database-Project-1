@@ -274,22 +274,24 @@ def renew_vregistration(cursor, conn):
         exp = cursor.fetchone()
         if exp == None:
             vregno = input('Please enter a valid registration number')
-
+    
+    exp = exp[0]
     currexp = exp.split('-')
     ndate = today
     ndate = ndate.replace(year = int(currexp[0]), month = int(currexp[1]), day = int(currexp[2]))
-
+    
     if today >= ndate:
 
+        ndate = today
         ndate = ndate.replace(year = today.year + 1)
-    
+        
     else:
-
+        
         ndate = ndate.replace(year = ndate.year + 1)
     
     ndate = ndate.strftime('%Y-%m-%d')
 
-    cursor.execute('update registrastions set regdate = ? where regno = ?;', (ndate, vregno,))
+    cursor.execute('update registrations set expiry = ? where regno = ?;', (ndate, vregno,))
     conn.commit()
 
 def sellCar(cursor, conn):
