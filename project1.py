@@ -151,42 +151,38 @@ def register_birth(cursor, conn, login):
 
     #check if parent 1 exists
     row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname,), (p1Lname,))
+    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname, p1Lname))
     row = cursor.fetchone()
 
     if row  == None:
 
         print('Mother info missing please enter the missing data')
 
-        paFname = input('Please enter the first name of Mother')
-        paLname = input('Please enter the last name of Mother')
         pabDate	= input('Please enter the birthdate of Mother')
         pabPlace = input('Please enter the birthplace of Mother')
         paAddress = input('Please enter the address of Mother')
         paPhone = input('Please enter the phone number of Mother')
 
-        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (paFname, paLname, pabDate, pabPlace, paAddress, paPhone))
+        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p1Fname, p1Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
     
     p2Fname = input('What is the first name of the Father')
     p2Lname = input('What is the last name of the Father')
 
     #check existence of Father
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?',(p2Fname,), (p2Lname,))
+    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?',(p2Fname, p2Lname))
     row = cursor.fetchone()
 
     if row  == None:
 
         print('Father info missing please enter the missing data')
-
-        paFname = input('Please enter the first name of Father')
-        paLname = input('Please enter the last name of Father')
+        
         pabDate = input('Please enter the birthdate of Father')
         pabPlace = input('Please enter the birthplace of Father')
         paAddress = input('Please enter the address of Father')
         paPhone = input('Please enter the phone number of Father')
 
-        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (paFname, paLname, pabDate, pabPlace, paAddress, paPhone))
+        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
     
     cursor.execute('insert into births values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', (bregno, bfname, blname, bregdate, bregplace, bgender, p1Fname, p1Lname, p2Fname, p2Lname))
@@ -231,39 +227,35 @@ def registerMarriage(cursor, conn):
             row = cursor.fetchone()
 
     row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname,), (p1Lname,))
+    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname, p1Lname,))
     row = cursor.fetchone()
 
     if row  == None:
 
         print('Partner 1 info missing please enter the missing data')
-
-        paFname = input('Please enter the first name of Partner 1')
-        paLname = input('Please enter the last name of Partner 1')
+        
         pabDate	= input('Please enter the birthdate of Partner 1')
         pabPlace = input('Please enter the birthplace of Partner 1')
         paAddress = input('Please enter the address of Partner 1')
         paPhone = input('Please enter the phone number of Partner 1')
 
-        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (paFname, paLname, pabDate, pabPlace, paAddress, paPhone))
+        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p1Fname, p1Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
     row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p2Fname,), (p2Lname,))
+    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p2Fname, p2Lname,))
     row = cursor.fetchone()
 
     if row  == None:
 
         print('Partner 2 info missing please enter the missing data')
 
-        paFname = input('Please enter the first name of Partner 2')
-        paLname = input('Please enter the last name of Partner 2')
         pabDate	= input('Please enter the birthdate of Partner 2')
         pabPlace = input('Please enter the birthplace of Partner 2')
         paAddress = input('Please enter the address of Partner 2')
         paPhone = input('Please enter the phone number of Partner 2')
 
-        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (paFname, paLname, pabDate, pabPlace, paAddress, paPhone))
+        cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
     cursor.execute('inset into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname)) #mregplace is an undefined variable
@@ -283,7 +275,7 @@ def renew_vregistration(cursor, conn):
 
     currexp = exp.split('-')
     ndate = today
-    ndate = ndate.replace(year = int(currexp[0]), month = currexp[1], day = currexp[2])
+    ndate = ndate.replace(year = int(currexp[0]), month = int(currexp[1]), day = int(currexp[2]))
 
     if today >= ndate:
 
@@ -295,7 +287,7 @@ def renew_vregistration(cursor, conn):
     
     ndate = ndate.strftime('%Y-%m-%d')
 
-    cursor.execute('update registrastions set regdate = ? where regno = ?;', (ndate,), (vregno,))
+    cursor.execute('update registrastions set regdate = ? where regno = ?;', (ndate, vregno,))
     conn.commit()
 
 def sellCar(cursor, conn):
@@ -333,7 +325,7 @@ def sellCar(cursor, conn):
     cursor.execute('select regno from registrations where vin = ? order by regdate DESC limit 1;', (cvin,))
     oregno = cursor.fetchone()
 
-    cursor.execute('update registrations set expiry = ? where regno = ?;', (oexpdate,), (oregno,))
+    cursor.execute('update registrations set expiry = ? where regno = ?;', (oexpdate, oregno,))
 
     nregno = random.randint(100000, 999999)
     cursor.execute('select * from registrations where regno = ?;', (nregno,))
@@ -364,7 +356,7 @@ def payment(cursor, conn):
     tfine = float(tfine)
     pamount = input('Please enter the ticket amount')
 
-    cursor.execute()#missing sql statement should collect a sum of payments with ptno my brain died and couldn't get it working :(
+    cursor.execute()#missing sql statement should collect a sum of payments with same ptno my brain died and couldn't get it working :(
     psum = cursor.fetchone()
 
     if (pamount + psum) > tfine:
