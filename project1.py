@@ -2,7 +2,7 @@ import sqlite3
 import sys
 import random
 import datetime
-from datetime import date
+from datetime import datetime
 
 def main():
     connection = sqlite3.connect("./project1.db")
@@ -233,7 +233,7 @@ def registerMarriage(cursor, conn):
     if row  == None:
 
         print('Partner 1 info missing please enter the missing data')
-        
+
         pabDate	= input('Please enter the birthdate of Partner 1')
         pabPlace = input('Please enter the birthplace of Partner 1')
         paAddress = input('Please enter the address of Partner 1')
@@ -258,8 +258,10 @@ def registerMarriage(cursor, conn):
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
-    cursor.execute('inset into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname)) #mregplace is an undefined variable
+    mregplace = input('Please enter the registration place')
+    cursor.execute('insert into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname)) #mregplace is an undefined variable
     conn.commit()
+
 
 def renew_vregistration(cursor, conn):
 
