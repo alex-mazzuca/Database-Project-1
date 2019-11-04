@@ -612,11 +612,11 @@ def get_driver_abstract(connection):
 
     option = input("\nWould you like to see the tickets ordered from lastest to oldest (Yes/No): ")
 
-    if option == "yes":
+    if option.lower() == "yes":
         cursor.execute("SELECT * FROM tickets left outer join registrations using (regno) left outer join vehicles using (vin) where fname =:f_name and lname =:l_name order by vdate DESC", {"f_name": database_fname, "l_name": database_lname})
         rows = cursor.fetchall()
         display_tickets(rows)
-    elif option == "no":
+    elif option.lower() == "no":
         cursor.execute("SELECT * FROM tickets left outer join registrations using (regno) left outer join vehicles using (vin) where fname =:f_name and lname =:l_name order by vdate", {"f_name": database_fname, "l_name": database_lname})
         rows = cursor.fetchall()
         display_tickets(rows)
