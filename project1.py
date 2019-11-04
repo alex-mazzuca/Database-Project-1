@@ -87,7 +87,7 @@ def display_ra_functionalities(cursor, connection, uid):
         elif command == "1":
             register_birth(cursor, connection, uid)
         elif command == "2":
-            registerMarriage(cursor, connection)
+            registerMarriage(cursor, connection, uid)
         elif command == "3":
             renew_vregistration(cursor, connection)
         elif command == "4":
@@ -242,7 +242,7 @@ def register_birth(cursor, conn, login):
     cursor.execute('insert into births values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', (bregno, bfname, blname, bregdate, bregplace, bgender, p2Fname, p2Lname, p1Fname, p1Lname))
     conn.commit()
 
-def registerMarriage(cursor, conn):
+def registerMarriage(cursor, conn, login):
 
     p1Fname = input('Please enter the first name of Partner 1: ')
     p1Lname = input('Please enter the last name of Partner 1: ')
@@ -322,7 +322,9 @@ def registerMarriage(cursor, conn):
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
-    mregplace = input('Please enter the registration place: ')
+    cursor.execute('select u.city from users u where u.uid = ?;', (login,))
+    mregplace = cursor.fetchone()
+    mregplace = bregplace[0]
     cursor.execute('insert into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname))
     conn.commit()
 
