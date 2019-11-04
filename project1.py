@@ -324,7 +324,7 @@ def registerMarriage(cursor, conn, login):
 
     cursor.execute('select u.city from users u where u.uid = ?;', (login,))
     mregplace = cursor.fetchone()
-    mregplace = bregplace[0]
+    mregplace = mregplace[0]
     cursor.execute('insert into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname))
     conn.commit()
 
