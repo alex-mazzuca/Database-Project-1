@@ -306,9 +306,9 @@ def registerMarriage(cursor, conn):
         paPhone = input('Please enter the phone number of Partner 2: ')
 
         while p2Fname == '':
-            p1Fname = input('Please enter the first name of Partner 2: ')
+            p2Fname = input('Please enter the first name of Partner 2: ')
         while p2Lname == '':
-            p1Lname = input('Please enter the last name of Partner 2: ')
+            p2Lname = input('Please enter the last name of Partner 2: ')
 
         if pabDate == '':
             pabDate = None
@@ -498,11 +498,12 @@ def issue_ticket(connection):
             cursor.execute("SELECT MAX(tno) FROM tickets")
             tno = cursor.fetchone()
             cursor.execute("INSERT INTO tickets VALUES (?, ?, ?, ?, ?)", (tno[0]+1, regno, int(fine_amount), violation_text, violation_date))
-        else:
-            print("\nRegistration number does not exist")
+            
+            connection.commit()
             return
-    
-    connection.commit()
+
+    print("\nRegistration number does not exist")
+    return
 
 
 def find_car_owner(connection):
@@ -563,7 +564,6 @@ def find_car_owner(connection):
               "Expiry Date:", row["expiry"], "Name:", row["fname"], row["lname"])
     elif len(vins) == 0:
         print("\nNo matches")
-
 
 
 def get_driver_abstract(connection):
