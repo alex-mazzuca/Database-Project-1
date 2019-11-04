@@ -511,7 +511,7 @@ def issue_ticket(connection):
 def find_car_owner(connection):
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM vehicles")
+    cursor.execute("SELECT * FROM vehicles left outer join registrations using (vin)")
     rows = cursor.fetchall()
 
     variable_dict = {}
