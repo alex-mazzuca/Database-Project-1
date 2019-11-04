@@ -632,7 +632,10 @@ def display_tickets(rows):
                 for i in range(left_point, right_point + 1):
                     print("Ticket number:", rows[i]["tno"], "Violation date: ", rows[i]["vdate"], "Violation description: ", rows[i]["violation"], "Fine: ", rows[i]["fine"],
                            " Registration number: ", rows[i]["regno"], "Make: ", rows[i]["make"], "Model: ", rows[i]["model"])
-
+                
+                if right_point == len(rows) - 1:
+                    return
+                
                 show_more = input("\nThere are more tickets to be shown would you like to show them? (Yes/No): ")
 
                 if show_more.lower() == "yes":
