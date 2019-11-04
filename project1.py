@@ -1,20 +1,23 @@
 import sqlite3
 import sys
-import random
-import datetime
-from datetime import datetime
+from datetime import date
 
 def main():
-    connection = sqlite3.connect("./project1.db")
+    try:
+        connection = sqlite3.connect(sys.argv[1])
+    except:
+        print("Missing Arguments")
+        sys.exit()
     cursor = connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON;")
     connection.commit()
     utype = ''
+    uid = ''
 
     while utype != "exit":
-        utype = login_screen(connection)
+        utype, uid = login_screen(connection)
         if utype == "a":
-            display_ra_functionalities(cursor, connection)
+            display_ra_functionalities(cursor, connection, uid)
         elif utype == "o":
             display_to_functionalities(connection)
 
@@ -31,7 +34,8 @@ def login_screen(connection):
     cursor.execute("SELECT uid, pwd, utype FROM users;")
     rows = cursor.fetchall()
 
-    print("Welcome! This is the login screen.\n")
+    print("Welcome! This is the login screen.")
+    print("Type Exit to quit the program.\n")
 
     while user_true == False:
         username = input("Please enter your username: ")
@@ -40,28 +44,30 @@ def login_screen(connection):
                 if each["uid"].lower() == username.lower():
                     if check_password(each, pwd_true) == True:
                         user_true = True
-                        return each["utype"].lower()
+                        return each["utype"].lower(), each["uid"]
+                    else:
+                        return "exit", None
             if user_true != True:
                 print("Incorrect Username, please try again\n ")
         else:
-            return "exit"
+            return "exit", None
 
 
 def check_password(each, pwd_true):
     while pwd_true == False:
         password = input("Please enter your password: ")
         if password.lower() != "exit":
-            if each["pwd"].lower() == password.lower():
+            if each["pwd"] == password:
                 pwd_true = True
-        if pwd_true != True:
-            print("Incorrect Password, please try again\n ")
-        else:
+            if pwd_true != True:
+                print("Incorrect Password, please try again\n ")
+        if password.lower() == "exit":
             return pwd_true
     
     return pwd_true
 
 
-def display_ra_functionalities(cursor, connection):
+def display_ra_functionalities(cursor, connection, uid):
     command = None
     while command != "7":
         print("\nYou are logged in as a Registry Agent")
@@ -79,7 +85,7 @@ def display_ra_functionalities(cursor, connection):
         elif command not in ["1","2","3","4","5","6","7","help"]:
             print("Incorrect command. Please try again")
         elif command == "1":
-            register_birth(cursor, connection, login)
+            register_birth(cursor, connection, uid)
         elif command == "2":
             registerMarriage(cursor, connection)
         elif command == "3":
@@ -114,166 +120,224 @@ def display_to_functionalities(connection):
 
 def register_birth(cursor, conn, login):
 
-    bregno = random.randint(100000,999999)
+    cursor.execute('select max(regno) from births')
+    bregno = cursor.fetchone()
 
-    row = None
-    cursor.execute('select * from births b where b.regno = ?;', (bregno,))
-    row = cursor.fetchone()
+    if bregno[0] == None:
+        bregno = 1
+    else:
+        bregno = bregno[0] + 1
 
-    if row != None:
-        while row != None:
-            bregno = random.randint(100000,999999)
+    bfname = ''
+    blname = ''
 
-            row = None
-            cursor.execute('select * from births b where b.regno = ?;', (bregno,))
-            row = cursor.fetchone()
+    while bfname == '':
+        bfname = input('What is the first name of the baby: ')
+    while blname == '':
+        blname = input('What is the last name of the baby: ')
 
-    bfname = input('What is the first name of the baby')
-    blname = input('What is the last name of the baby')
-
-    bregdate = datetime.date(datetime.now()) #datetime error here
+    bregdate = date.today() 
     bregdate = bregdate.strftime('%Y-%m-%d')
 
     cursor.execute('select u.city from users u where u.uid = ?;', (login,))
     bregplace = cursor.fetchone()
+    bregplace = bregplace[0]
 
-    nbplace = input('What is the birth place')
+    nbplace = input('What is the birth place: ')
+    if nbplace =='':
+        nbplace = None
 
     bgender = 'l'
 
-    while bgender != 'M' or bgender != 'F':
+    while bgender != 'M' and bgender != 'F':
 
-        bgender = input('What is the gender of the child (M or F)?')
+        bgender = input('What is the gender of the child (M or F)?: ')
         bgender = bgender.upper()
     
-    p1Fname = input('What is the first name the Mother')
-    p1Lname = input('What is the last name of the Mother')
+    p1Fname = input('What is the first name the Mother: ')
+    p1Lname = input('What is the last name of the Mother: ')
 
-    #check if parent 1 exists
-    row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname, p1Lname))
-    row = cursor.fetchone()
+    #check if Mother exists
+    p1Fname, p1Lname = find_person(p1Fname, p1Lname, conn)
 
-    if row  == None:
+    if p1Fname  == False and p1Lname == False:
 
         print('Mother info missing please enter the missing data')
 
-        pabDate	= input('Please enter the birthdate of Mother')
-        pabPlace = input('Please enter the birthplace of Mother')
-        paAddress = input('Please enter the address of Mother')
-        paPhone = input('Please enter the phone number of Mother')
+        p1Fname = input('Please enter the first name of Mother: ')
+        p1Lname = input('Please enter the last name of Mother: ')
+        pabDate	= input('Please enter the birthdate of Mother: ')
+        pabPlace = input('Please enter the birthplace of Mother: ')
+        paAddress = input('Please enter the address of Mother: ')
+        paPhone = input('Please enter the phone number of Mother: ')
+
+        while p1Fname == '':
+            p1Fname = input('Please enter the first name of Mother: ')
+        while p1Lname == '':
+            p1Lname = input('Please enter the last name of Mother: ')
+
+        if pabDate == '':
+            pabDate = None
+        if pabPlace == '':
+            pabPlace = None
+        if paAddress == '':
+            paAddress = None
+        if paPhone == '':
+            paPhone = None
 
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p1Fname, p1Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
     
-    p2Fname = input('What is the first name of the Father')
-    p2Lname = input('What is the last name of the Father')
+    p2Fname = input('What is the first name of the Father: ')
+    p2Lname = input('What is the last name of the Father: ')
 
     #check existence of Father
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?',(p2Fname, p2Lname))
-    row = cursor.fetchone()
+    p2Fname, p2Lname = find_person(p2Fname, p2Lname, conn)
 
-    if row  == None:
+    if p2Fname  == False and p2Lname == False:
 
         print('Father info missing please enter the missing data')
         
-        pabDate = input('Please enter the birthdate of Father')
-        pabPlace = input('Please enter the birthplace of Father')
-        paAddress = input('Please enter the address of Father')
-        paPhone = input('Please enter the phone number of Father')
+        p2Fname = input('Please enter the first name of Father: ')
+        p2Lname = input('Please enter the last name of Father: ')
+        pabDate = input('Please enter the birthdate of Father: ')
+        pabPlace = input('Please enter the birthplace of Father: ')
+        paAddress = input('Please enter the address of Father: ')
+        paPhone = input('Please enter the phone number of Father: ')
+
+        while p2Fname == '':
+            p2Fname = input('Please enter the first name of Father: ')
+        while p2Lname == '':
+            p2Lname = input('Please enter the last name of Father: ')
+
+        if pabDate == '':
+            pabDate = None
+        if pabPlace == '':
+            pabPlace = None
+        if paAddress == '':
+            paAddress = None
+        if paPhone == '':
+            paPhone = None
 
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
     
-    cursor.execute('insert into births values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', (bregno, bfname, blname, bregdate, bregplace, bgender, p1Fname, p1Lname, p2Fname, p2Lname))
-    conn.commit()
 
     #create the persons entry
-    nbdate = input('Please enter the birthdate of the baby')
+    nbdate = input('Please enter the birthdate of the baby: ')
+    if nbdate == '':
+        nbdate = None
+
     cursor.execute('select p.address from persons p where p.fname = ? and p.lname = ?;', (p1Fname, p1Lname))
     baddress = cursor.fetchone()
+    baddress = baddress[0]
 
     cursor.execute('select p.phone from persons p where p.fname = ? and p.lname = ?;', (p1Fname, p1Lname))
     bphone = cursor.fetchone()
+    bphone = bphone[0]
 
     cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (bfname, blname, nbdate, nbplace, baddress, bphone))
     conn.commit()
 
+    cursor.execute('insert into births values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);', (bregno, bfname, blname, bregdate, bregplace, bgender, p2Fname, p2Lname, p1Fname, p1Lname))
+    conn.commit()
+
 def registerMarriage(cursor, conn):
 
-    p1Fname = input('Please enter the first name of Partner 1')
-    p1Lname = input('Please enter the last name of Partner 1')
-    p2Fname = input('Please enter the first name of Partner 2')
-    p2Lname = input('Please enter the last name of Partner 2')
+    p1Fname = input('Please enter the first name of Partner 1: ')
+    p1Lname = input('Please enter the last name of Partner 1: ')
+    p2Fname = input('Please enter the first name of Partner 2: ')
+    p2Lname = input('Please enter the last name of Partner 2: ')
 
-    mregdate = datetime.date(datetime.now()) #datetime error here
+    mregdate = date.today()
     mregdate = mregdate.strftime('%Y-%m-%d')
 
-    mregno = random.randint(100000,999999)
+    cursor.execute('select max(regno) from marriages')
+    mregno = cursor.fetchone()
 
-    row = None
 
-    cursor.execute('select * from marriages m where m.regno = ?;', (mregno,))
-    row = cursor.fetchone()
+    if mregno[0] == None:
+        mregno = 1
+    else:
+        mregno = mregno[0] + 1
 
-    if row != None:
+    p1Fname, p1Lname = find_person(p1Fname, p1Lname, conn)
 
-        while row != None:
-
-            mregno = random.randint(100000,999999)
-
-            row = None
-            cursor.execute('select * from marriages m where m.regno = ?;', (mregno,))
-            row = cursor.fetchone()
-
-    row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p1Fname, p1Lname,))
-    row = cursor.fetchone()
-
-    if row  == None:
+    if p1Fname  == False and p1Lname == False:
 
         print('Partner 1 info missing please enter the missing data')
 
-        pabDate	= input('Please enter the birthdate of Partner 1')
-        pabPlace = input('Please enter the birthplace of Partner 1')
-        paAddress = input('Please enter the address of Partner 1')
-        paPhone = input('Please enter the phone number of Partner 1')
+        p1Fname = input('Please enter the first name of Partner 1: ')
+        p1Lname = input('Please enter the last name of Partner 1: ')
+        pabDate	= input('Please enter the birthdate of Partner 1: ')
+        pabPlace = input('Please enter the birthplace of Partner 1: ')
+        paAddress = input('Please enter the address of Partner 1: ')
+        paPhone = input('Please enter the phone number of Partner 1: ')
+
+        while p1Fname == '':
+            p1Fname = input('Please enter the first name of Partner 1: ')
+        while p1Lname == '':
+            p1Lname = input('Please enter the last name of Partner 1: ')
+        
+        if pabDate == '':
+            pabDate = None
+        if pabPlace == '':
+            pabPlace = None
+        if paAddress == '':
+            paAddress = None
+        if paPhone == '':
+            paPhone = None
 
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p1Fname, p1Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
-    row = None
-    cursor.execute('select * from persons p where p.fname = ? and p.lname = ?;',(p2Fname, p2Lname,))
-    row = cursor.fetchone()
+    
+    p2Fname, p2Lname = find_person(p2Fname, p2Lname, conn)
 
-    if row  == None:
+    if p2Fname  == False and p2Lname == False:
 
         print('Partner 2 info missing please enter the missing data')
 
-        pabDate	= input('Please enter the birthdate of Partner 2')
-        pabPlace = input('Please enter the birthplace of Partner 2')
-        paAddress = input('Please enter the address of Partner 2')
-        paPhone = input('Please enter the phone number of Partner 2')
+        p2Fname = input('Please enter the first name of Partner 2: ')
+        p2Lname = input('Please enter the last name of Partner 2: ')
+        pabDate	= input('Please enter the birthdate of Partner 2: ')
+        pabPlace = input('Please enter the birthplace of Partner 2: ')
+        paAddress = input('Please enter the address of Partner 2: ')
+        paPhone = input('Please enter the phone number of Partner 2: ')
+
+        while p2Fname == '':
+            p1Fname = input('Please enter the first name of Partner 2: ')
+        while p2Lname == '':
+            p1Lname = input('Please enter the last name of Partner 2: ')
+
+        if pabDate == '':
+            pabDate = None
+        if pabPlace == '':
+            pabPlace = None
+        if paAddress == '':
+            paAddress = None
+        if paPhone == '':
+            paPhone = None
 
         cursor.execute('insert into persons values (?, ?, ?, ?, ?, ?);', (p2Fname, p2Lname, pabDate, pabPlace, paAddress, paPhone))
         conn.commit()
 
-    mregplace = input('Please enter the registration place')
-    cursor.execute('insert into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname)) #mregplace is an undefined variable
+    mregplace = input('Please enter the registration place: ')
+    cursor.execute('insert into marriages values (?, ?, ?, ?, ?, ?, ?);', (mregno, mregdate, mregplace, p1Fname, p1Lname, p2Fname, p2Lname))
     conn.commit()
 
 
 def renew_vregistration(cursor, conn):
 
-    vregno = input('Please enter the vehicles registration number')
-    today = datetime.date(datetime.now()) #datetime error here
+    vregno = input('Please enter the vehicles registration number: ')
+    today = date.today()
 
     exp = None
     while exp == None:
         cursor.execute('select r.expiry from registrations r where r.regno = ?;', (vregno,))
         exp = cursor.fetchone()
         if exp == None:
-            vregno = input('Please enter a valid registration number')
+            vregno = input('Please enter a valid registration number: ')
     
     exp = exp[0]
     currexp = exp.split('-')
@@ -296,31 +360,38 @@ def renew_vregistration(cursor, conn):
 
 def sellCar(cursor, conn):
 
-    ofname = input('Please enter the first name of the old owner')
-    olname = input('Please enter the last name of the old owner')
-    nfname = input('Please enter the first name of the new owner')
-    nlname = input('Please enter the last name of the new owner')
-    cvin = input('Please enter the vin of the car')
+    cvin = input('Please enter the vin of the car: ')
+    ofname = input('Please enter the first name of the current owner: ')
+    olname = input('Please enter the last name of the current owner: ')
+    nfname = input('Please enter the first name of the new owner: ')
+    nlname = input('Please enter the last name of the new owner: ')
 
     cursor.execute('select * from registrations where vin = ?;', (cvin,))
     check = cursor.fetchone()
     if check == None:
 
         print('Invalid vin')
-        return 0
+        return
 
     cursor.execute('select fname from registrations where vin = ? order by regdate DESC limit 1;', (cvin,))
     cfname = cursor.fetchone()
+    cfname = cfname[0]
 
     cursor.execute('select lname from registrations where vin = ? order by regdate DESC limit 1;', (cvin,))
     clname = cursor.fetchone()
+    clname = clname[0]
 
-    if cfname != ofname or clname != olname:
+    if cfname.lower() != ofname.lower() and clname.lower() != olname:
         print('Invalid seller')
         return 0
 
-    nplate = input('Please enter the new plate number')
-    oexpdate = datetime.date(datetime.now()) #datetime error here
+    nfname, nlname = find_person(nfname, nlname, conn)
+    if nfname == False and nlname == False:
+        print("Error: Cant find new owner in persons")
+        return
+
+    nplate = input('Please enter the new plate number: ')
+    oexpdate = date.today()
     nexpdate = oexpdate
     nexpdate = nexpdate.replace( year = nexpdate.year + 1)
     oexpdate = oexpdate.strftime('%Y-%m-%d')
@@ -328,26 +399,36 @@ def sellCar(cursor, conn):
 
     cursor.execute('select regno from registrations where vin = ? order by regdate DESC limit 1;', (cvin,))
     oregno = cursor.fetchone()
+    oregno = oregno[0]
 
-    cursor.execute('update registrations set expiry = ? where regno = ?;', (oexpdate, oregno,))
+    cursor.execute('update registrations set expiry = :oexpdate where regno = :oregno;', {'oexpdate': oexpdate, 'oregno': oregno})
 
-    nregno = random.randint(100000, 999999)
-    cursor.execute('select * from registrations where regno = ?;', (nregno,))
-    check2 = cursor.fetchone()
-
-    if check2 != None:
-        while check2 != None:
-            nregno = random.randint(100000, 999999)
-            cursor.execute('select * from registrations where regno = ?;', (nregno,))
-            check2 = cursor.fetchone()
+    cursor.execute('select max(regno) from registrations')
+    nregno = cursor.fetchone()
+    nregno = nregno[0] + 1
     
     cursor.execute('insert into registrations values (?, ?, ?, ?, ?, ?, ?);', (nregno, oexpdate, nexpdate, nplate, cvin, nfname, nlname))
     conn.commit()
 
+#Find Person in Persons and returns ther first and last name
+def find_person(fname, lname, connection):
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+    fname = fname
+    lname = lname
+
+    cursor.execute('select * from persons')
+    row = cursor.fetchall()
+    for each in row:
+        if fname.lower() == each["fname"].lower() and lname.lower() == each["lname"].lower():
+            return each["fname"], each["lname"]
+    
+    return False, False
+
 
 def payment(cursor, conn):
 
-    ptno = input('Please enter the ticket number for the ticket that is being paid')
+    ptno = input('Please enter the ticket number for the ticket that is being paid: ')
 
     cursor.execute('select fine from tickets where tno = ?;', (ptno,))
     tfine = cursor.fetchone()
@@ -355,24 +436,38 @@ def payment(cursor, conn):
     if tfine == None:
 
         print('Invalid ticket number')
-        return 0
+        return
 
-    tfine = float(tfine)
-    pamount = input('Please enter the ticket amount')
+    tfine = int(tfine[0])
 
-    cursor.execute()#missing sql statement should collect a sum of payments with same ptno my brain died and couldn't get it working :(
+    pamount = input('Please enter the amount being paid: ')
+    pamount = int(pamount)
+    
+    cursor.execute('select sum(amount) as total from payments where tno = ? group by tno;', (ptno,))
     psum = cursor.fetchone()
+    if psum != None:
+        psum = psum[0]
 
-    if (pamount + psum) > tfine:
+        if (pamount + psum) > tfine:
 
-        pmax = tfine - psum
-        print('Invalid payment:too high max payment for this fine is ' + pmax)
-        return 0
+            pmax = tfine - psum
+            print('Invalid payment:too high max payment for this fine is ', pmax)
+            return
 
-    pdate = datetime.date(datetime.now()) #datetime error here
-    pdate = pdate.strftime('%Y-%m-%d')
+    elif psum == None:
+        if pamount > tfine:
+            print('Invalid payment:too high max payment for this fine is', tfine)
+            return
 
-    cursor.execute('insert into payments values (?, ?, ?,);', (ptno, pdate, pamount))
+    today = date.today()
+    pdate = today.strftime("%Y-%m-%d")
+
+    try:
+        cursor.execute('insert into payments values (?, ?, ?);', (ptno, pdate, pamount))
+    except:
+        print("Cant pay ticket twice in one day")
+        return
+        
     conn.commit()
 
 def issue_ticket(connection):
